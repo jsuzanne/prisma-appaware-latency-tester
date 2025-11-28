@@ -1,0 +1,17 @@
+[Unit]
+Description=TCP Server with configurable delay
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/tcp-server
+ExecStart=/usr/bin/python3 /opt/tcp-server/server.py --port 18890 --delay-min 5 --delay-max 10 --data-size 104850
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+

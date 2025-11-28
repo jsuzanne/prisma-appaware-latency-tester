@@ -1,0 +1,18 @@
+[Unit]
+Description=TCP Client instance %I
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/tcp-client
+EnvironmentFile=/opt/tcp-client/%i.env
+ExecStart=/usr/bin/python3 /opt/tcp-client/client.py --host ${HOST} --port ${PORT} --interval 30
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

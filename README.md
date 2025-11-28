@@ -1,280 +1,279 @@
-═══════════════════════════════════════════════════════════════════
-text
-# Prisma AppAware Latency Tester
+# Prisma App-Aware Latency Tester
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.6%2B-blue.svg)
-![Prisma SD-WAN](https://img.shields.io/badge/Prisma-SD--WAN-orange.svg)
+![Python](https://img.shields.io/badge/python-3.6+-green.svg)
+![Platform](https://img.shields.io/badge/platform-Linux-lightgrey.svg)
 
-**Demonstrate Prisma SD-WAN's Layer 7 intelligence for latency troubleshooting**
+A TCP-based latency measurement tool designed to demonstrate **Prisma SD-WAN's Layer 7 intelligence** in differentiating network latency from application server latency.
 
-Showcase Prisma SD-WAN's unique ability to **differentiate network latency from server/application latency** - a key differentiator for instant root cause identification.
+## 🎯 Purpose
+
+Traditional network monitoring tools can only see end-to-end latency. When applications are slow, teams waste time debating: **Is it the network or the server?**
+
+**Prisma SD-WAN's Layer 7 visibility solves this** by measuring:
+- **Network RTT** (Round-Trip Time)
+- **Server Processing Time**
+- **Total Transaction Time**
+
+This tool simulates realistic application behavior to showcase Prisma SD-WAN's troubleshooting capabilities.
 
 ---
 
 ## 🏗️ Architecture
 
-### Real-World Scenario
+Branch Site (Remote) → Datacenter (Central)
+────────────────────── ────────────────────
+Ubuntu Client Ubuntu Server
 
-Branch Office (Remote) WAN/SD-WAN Data Center
-────────────────────── ────────── ────────────
+Simulates users - Hosts applications
 
-Ubuntu207 (CLIENT) Prisma Ubuntu201 (SERVER)
+Outbound traffic - Slow backend
 
-End users Monitors - Applications
-
-Workstations Here! ◄─ - Databases
-
-Business hours 8h-18h - Slow processing
-- Backend APIs
+Business hours patterns - Database queries
+- Processing delays
 
 text
- │                                          │
- └────────── Internet/MPLS ─────────────────┘
+   │                                      │
+   └──────── WAN / SD-WAN ───────────────┘
 text
-
-**CLIENT (Ubuntu207)** = Branch office users  
-**SERVER (Ubuntu201)** = Datacenter applications (slow CRM, ERP, databases)  
-**PRISMA SD-WAN** = Measures network vs server latency separately
 
 ---
 
-## 🎯 The Problem This Solves
+## 📦 Features
 
-**Customer Pain:**
-> "Users complain the CRM is slow. Is it the network or the server?"
-
-**Without Prisma** 😕:
-- See only: Total time = 8.2 seconds
-- Result: Hours of finger-pointing between network and server teams
-
-**With Prisma** 😎:
-- Network RTT: **15 ms** ✓ (healthy)
-- Server Response: **8.1 sec** ⚠ (problem!)
-- Result: **Instant identification** → engage application team
-
----
-
-## 📊 Features
-
-### Server (Ubuntu201 - Datacenter)
-- Simulates slow applications (5-10 second processing)
-- Configurable delay and data size
-- Multi-client support
-- Systemd service
-
-### Client (Ubuntu207 - Branch)
-- Business hours emulation (8h-18h weekdays)
-- Peak hour simulation (10h, 14h, 16h)
-- Off-hours minimal activity
-- Multiple server support
-
-### Traffic Patterns
-
-| Time Period | Interval | Activity |
-|-------------|----------|----------|
-| Business hours (8h-18h) | 3 min | Normal |
-| Peak hours | 1.5 min | High |
-| Night (18h-8h) | 10-30 min | Minimal |
-| Weekend | 30-60 min | Very low |
+- **Business Hours Emulation**: Server introduces 5-10s delay during 8 AM - 6 PM to simulate peak load
+- **Transaction-Based Testing**: Each connection sends request, receives 1MB response, then closes
+- **Automatic Reconnection**: Client establishes new TCP session every 3 seconds
+- **Systemd Integration**: Runs as persistent background service
+- **Multi-Instance Support**: Test multiple servers simultaneously from one client
 
 ---
 
 ## 🚀 Quick Start
 
-### Server Installation (Ubuntu201 - Datacenter)
+### Installation
 
+#### Server Side (Datacenter)
+
+Clone repository
 git clone https://github.com/jsuzanne/prisma-appaware-latency-tester.git
 cd prisma-appaware-latency-tester
-chmod +x install-server.sh
+
+Run installation script
 sudo ./install-server.sh
-sudo systemctl start tcp-server
-sudo systemctl enable tcp-server
 
-text
-
-### Client Installation (Ubuntu207 - Branch)
-
-git clone https://github.com/jsuzanne/prisma-appaware-latency-tester.git
-cd prisma-appaware-latency-tester
-chmod +x install-client.sh
-sudo ./install-client.sh
-
-Configure server IP
-sudo nano /opt/tcp-client/server01.env
-
-Set: HOST=192.168.1.201 and PORT=18890
-sudo systemctl start tcp-client@server01
-sudo systemctl enable tcp-client@server01
-
-text
-
-### View Logs
-
-Server logs (Ubuntu201)
+Verify service
+sudo systemctl status tcp-server
 sudo journalctl -u tcp-server -f
 
-Client logs (Ubuntu207)
-sudo journalctl -u tcp-client@server01 -f
+text
+
+#### Client Side (Branch Site)
+
+Clone repository
+git clone https://github.com/jsuzanne/prisma-appaware-latency-tester.git
+cd prisma-appaware-latency-tester
+
+Run installation script
+sudo ./install-client.sh
+
+Configure target server
+sudo nano /opt/tcp-client/server01.env
 
 text
 
----
-
-## 📖 Example Output
-
-### Client Output (Branch)
-[CLIENT] Transaction #42 - Semaine - Heures de travail
-[CLIENT] Connexion à 192.168.1.201:18890...
-[CLIENT] Connecté en 0.012 secondes ← Network latency
-[CLIENT] Temps de transaction: 12.45 secondes ← Total time
-[CLIENT] Débit: 8.03 Mo/s
-
-text
-
-### What Prisma Shows
-
-Application Performance Dashboard
-├─ Network RTT: 12 ms ✓ Healthy
-├─ Server Response: 8.2 sec ⚠ Slow
-├─ Data Transfer: 4.2 sec ✓ Good
-└─ Root Cause: Server Processing Delay
-
-text
-
----
-
-## ⚙️ Configuration
-
-### Server Settings
-
-sudo nano /etc/systemd/system/tcp-server.service
-
-Adjust these parameters:
---delay-min 5 # Min processing delay (seconds)
---delay-max 10 # Max processing delay (seconds)
---data-size 104857600 # Payload size (100 MB)
-
-text
-
-### Multiple Servers (Client)
-
-Configure second server
-sudo nano /opt/tcp-client/server02.env
-HOST=192.168.1.202
+Edit `server01.env`:
+HOST=<server-ip-address>
 PORT=18890
 
-Start it
-sudo systemctl start tcp-client@server02
-sudo systemctl enable tcp-client@server02
+text
+
+Enable and start:
+sudo systemctl enable tcp-client@server01
+sudo systemctl start tcp-client@server01
+sudo systemctl status tcp-client@server01
 
 text
 
 ---
 
-## 🎬 Demo Usage
+## 📊 Usage
 
-Perfect for:
-- **SD-WAN Demos**: Showcase Layer 7 intelligence
-- **Customer POCs**: Prove troubleshooting value
-- **Training**: Teach network vs app latency
-- **Testing**: Validate SD-WAN policies
+### Starting Services
 
-See [Demo Script](docs/DEMO.md) for step-by-step demo guide.
+**Server:**
+sudo systemctl start tcp-server
+
+text
+
+**Client (single instance):**
+sudo systemctl start tcp-client@server01
+
+text
+
+**Client (multiple servers):**
+Create additional .env files
+sudo cp /opt/tcp-client/server01.env /opt/tcp-client/server02.env
+sudo nano /opt/tcp-client/server02.env # Edit with different HOST/PORT
+
+Start multiple instances
+sudo systemctl start tcp-client@server01
+sudo systemctl start tcp-client@server02
+sudo systemctl enable tcp-client@server01 # Auto-start on boot
+
+text
+
+### Monitoring
+
+**Live logs:**
+Server logs
+sudo journalctl -u tcp-server -f
+
+Client logs (specific instance)
+sudo journalctl -u tcp-client@server01 -f
+
+Client logs (all instances)
+sudo journalctl -u 'tcp-client@*' -f
+
+text
+
+**Recent logs:**
+sudo journalctl -u tcp-server -n 100
+sudo journalctl -u tcp-client@server01 -n 100
+
+text
 
 ---
 
-## 🔍 Troubleshooting
+## 🔧 Configuration
 
-### Client can't connect
+### Server Configuration
+
+Edit `/opt/tcp-server/server.py` to adjust:
+- `PORT`: Listening port (default: 18890)
+- `BUSINESS_HOURS_DELAY`: Response delay range during peak (default: 5-10s)
+- `BUSINESS_HOURS`: Time window for slow responses (default: 8-18)
+- `RESPONSE_SIZE`: Data payload size (default: 1MB)
+
+### Client Configuration
+
+Each client instance uses an environment file in `/opt/tcp-client/<instance>.env`:
+
+HOST=192.168.1.100 # Target server IP
+PORT=18890 # Target server port
+
+text
+
+Edit `/opt/tcp-client/client.py` to adjust:
+- `--interval`: Seconds between transactions (default: 3)
+
+---
+
+## 📈 What You'll See in Prisma SD-WAN
+
+When monitoring this traffic through Prisma SD-WAN:
+
+**Network Metrics:**
+- RTT: ~10-50ms (depends on WAN link)
+- Jitter: Minimal
+- Packet Loss: 0%
+
+**Application Metrics:**
+- Server Response Time: 5-10s (business hours) or <1s (off-hours)
+- Total Transaction Time: RTT + Server Time
+- Layer 7 visibility shows exact breakdown
+
+**Key Insight:** When users complain about slowness during business hours, Prisma SD-WAN immediately shows **server processing (8s) vs network (20ms)** - no guesswork!
+
+---
+
+## 🛠️ Troubleshooting
+
+**Service won't start:**
+sudo systemctl status tcp-server # Check error details
+sudo journalctl -xe # View full system logs
+
+text
+
+**Client can't connect:**
+Verify server is listening
+sudo netstat -tlnp | grep 18890
 
 Test connectivity
-ping 192.168.1.201
-nc -zv 192.168.1.201 18890
+telnet <server-ip> 18890
 
 Check firewall
+sudo ufw status
 sudo ufw allow 18890/tcp
 
 text
 
-### Server not responding
+**Logs not showing:**
+Verify service is running
+systemctl is-active tcp-server
+systemctl is-active tcp-client@server01
 
-sudo systemctl status tcp-server
-sudo journalctl -u tcp-server -n 50
-sudo netstat -tlnp | grep 18890
-
-text
-
----
-
-## 🔄 Updating
-
-cd prisma-appaware-latency-tester
-git pull origin main
-
-Update client
-sudo cp client/client.py /opt/tcp-client/
-sudo systemctl restart tcp-client@*
-
-Update server
-sudo cp server/server.py /opt/tcp-server/
-sudo systemctl restart tcp-server
+Check journal size
+journalctl --disk-usage
 
 text
 
 ---
 
-## 🗑️ Uninstallation
+## 📋 File Structure
 
-### Client
-sudo systemctl stop tcp-client@*
-sudo systemctl disable tcp-client@*
-sudo rm -rf /opt/tcp-client
-sudo rm /etc/systemd/system/tcp-client@.service
-sudo systemctl daemon-reload
-
-text
-
-### Server
-sudo systemctl stop tcp-server
-sudo systemctl disable tcp-server
-sudo rm -rf /opt/tcp-server
-sudo rm /etc/systemd/system/tcp-server.service
-sudo systemctl daemon-reload
+prisma-appaware-latency-tester/
+├── README.md
+├── LICENSE
+├── install-server.sh # Server installation script
+├── install-client.sh # Client installation script
+├── client/
+│ ├── client.py # Client script
+│ └── tcp-client@.service # Systemd template service
+├── server/
+│ ├── server.py # Server script
+│ └── tcp-server.service # Systemd service
+├── config/
+│ └── server01.env.example # Example environment file
+└── docs/
+└── DEMO.md # Demo presentation guide
 
 text
 
 ---
 
-## 📚 Documentation
+## 🎤 Demo Scenario
 
-- **[Demo Script](docs/DEMO.md)** - Complete demo walkthrough
-- **[Configuration](docs/CONFIGURATION.md)** - Advanced settings
+See [docs/DEMO.md](docs/DEMO.md) for a complete presentation script including:
+- Architecture explanation
+- Live troubleshooting scenario
+- Prisma SD-WAN dashboard walkthrough
+- Q&A preparation
 
 ---
 
 ## 🤝 Contributing
 
-Contributions welcome! Open an issue or submit a pull request.
+Contributions are welcome! Feel free to:
+- Report issues
+- Submit pull requests
+- Suggest improvements
 
 ---
 
-## 📝 License
+## 📄 License
 
-MIT License - see [LICENSE](LICENSE) file
-
----
-
-## 📧 Support
-
-- **Issues**: https://github.com/jsuzanne/prisma-appaware-latency-tester/issues
-- **Author**: Julien Suzanne - Palo Alto Networks SASE Specialist
-- **LinkedIn**: [Connect](https://www.linkedin.com/in/julien-suzanne/)
+MIT License - See [LICENSE](LICENSE) file for details
 
 ---
 
-**Made with ❤️ for Prisma SD-WAN SEs and Partners**
+## 🔗 Related Resources
 
-*Stop blaming the network when it's the server* 🚀
-text
-═══════════════════════════════════════════════════════════════════
+- [Prisma SD-WAN Documentation](https://docs.paloaltonetworks.com/prisma/prisma-sd-wan)
+- [App-Aware Routing](https://docs.paloaltonetworks.com/prisma/prisma-sd-wan/prisma-sd-wan-admin/prisma-sd-wan-application-policies)
+- [Layer 7 Visibility](https://docs.paloaltonetworks.com/prisma/prisma-sd-wan/prisma-sd-wan-admin/monitor-and-troubleshoot)
+
+---
+
+**Built for Prisma SD-WAN SEs and Partners** 🚀
+

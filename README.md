@@ -20,6 +20,7 @@ This tool simulates realistic application behavior to showcase Prisma SD-WAN's t
 ---
 
 ## 🏗️ Architecture
+```text
 
 Branch Site (Remote) → Datacenter (Central)
 ────────────────────── ────────────────────
@@ -34,6 +35,7 @@ Business hours patterns - Database queries
 
    │                                      │
    └──────── WAN / SD-WAN ───────────────┘
+```
 
 ---
 

@@ -247,6 +247,7 @@ journalctl --disk-usage
 
 ## 📋 File Structure
 
+```text
 prisma-appaware-latency-tester/
 ├── README.md
 ├── LICENSE
@@ -262,6 +263,7 @@ prisma-appaware-latency-tester/
 │ └── server01.env.example # Example environment file
 └── docs/
 └── DEMO.md # Demo presentation guide
+```
 
 ---
 

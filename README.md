@@ -32,10 +32,8 @@ Outbound traffic - Slow backend
 Business hours patterns - Database queries
 - Processing delays
 
-text
    │                                      │
    └──────── WAN / SD-WAN ───────────────┘
-text
 
 ---
 
@@ -56,44 +54,52 @@ text
 #### Server Side (Datacenter)
 
 Clone repository
+```bash
 git clone https://github.com/jsuzanne/prisma-appaware-latency-tester.git
 cd prisma-appaware-latency-tester
+```
 
 Run installation script
+```bash
 sudo ./install-server.sh
+```
 
 Verify service
+```bash
 sudo systemctl status tcp-server
 sudo journalctl -u tcp-server -f
-
-text
+```
 
 #### Client Side (Branch Site)
 
 Clone repository
+```bash
 git clone https://github.com/jsuzanne/prisma-appaware-latency-tester.git
 cd prisma-appaware-latency-tester
+```
 
 Run installation script
+```bash
 sudo ./install-client.sh
+```
 
 Configure target server
+```bash
 sudo nano /opt/tcp-client/server01.env
-
-text
+```
 
 Edit `server01.env`:
+```bash
 HOST=<server-ip-address>
 PORT=18890
-
-text
+```
 
 Enable and start:
+```bash
 sudo systemctl enable tcp-client@server01
 sudo systemctl start tcp-client@server01
+```
 sudo systemctl status tcp-client@server01
-
-text
 
 ---
 
@@ -102,46 +108,52 @@ text
 ### Starting Services
 
 **Server:**
+```bash
 sudo systemctl start tcp-server
-
-text
+```
 
 **Client (single instance):**
+```bash
 sudo systemctl start tcp-client@server01
-
-text
+```
 
 **Client (multiple servers):**
 Create additional .env files
+```bash
 sudo cp /opt/tcp-client/server01.env /opt/tcp-client/server02.env
 sudo nano /opt/tcp-client/server02.env # Edit with different HOST/PORT
+```
 
 Start multiple instances
+```bash
 sudo systemctl start tcp-client@server01
 sudo systemctl start tcp-client@server02
 sudo systemctl enable tcp-client@server01 # Auto-start on boot
-
-text
+```
 
 ### Monitoring
 
 **Live logs:**
 Server logs
+```bash
 sudo journalctl -u tcp-server -f
+```
 
 Client logs (specific instance)
+```bash
 sudo journalctl -u tcp-client@server01 -f
+```
 
 Client logs (all instances)
+```bash
 sudo journalctl -u 'tcp-client@*' -f
-
-text
+```
 
 **Recent logs:**
+```bash
 sudo journalctl -u tcp-server -n 100
 sudo journalctl -u tcp-client@server01 -n 100
-
-text
+```
 
 ---
 
@@ -150,22 +162,26 @@ text
 ### Server Configuration
 
 Edit `/opt/tcp-server/server.py` to adjust:
+```bash
 - `PORT`: Listening port (default: 18890)
 - `BUSINESS_HOURS_DELAY`: Response delay range during peak (default: 5-10s)
 - `BUSINESS_HOURS`: Time window for slow responses (default: 8-18)
 - `RESPONSE_SIZE`: Data payload size (default: 1MB)
+```
 
 ### Client Configuration
 
 Each client instance uses an environment file in `/opt/tcp-client/<instance>.env`:
 
+```bash
 HOST=192.168.1.100 # Target server IP
 PORT=18890 # Target server port
-
-text
+```
 
 Edit `/opt/tcp-client/client.py` to adjust:
+```bash
 - `--interval`: Seconds between transactions (default: 3)
+```
 
 ---
 
@@ -174,14 +190,18 @@ Edit `/opt/tcp-client/client.py` to adjust:
 When monitoring this traffic through Prisma SD-WAN:
 
 **Network Metrics:**
+```bash
 - RTT: ~10-50ms (depends on WAN link)
 - Jitter: Minimal
 - Packet Loss: 0%
+```
 
 **Application Metrics:**
+```bash
 - Server Response Time: 5-10s (business hours) or <1s (off-hours)
 - Total Transaction Time: RTT + Server Time
 - Layer 7 visibility shows exact breakdown
+```
 
 **Key Insight:** When users complain about slowness during business hours, Prisma SD-WAN immediately shows **server processing (8s) vs network (20ms)** - no guesswork!
 
@@ -190,33 +210,38 @@ When monitoring this traffic through Prisma SD-WAN:
 ## 🛠️ Troubleshooting
 
 **Service won't start:**
+```bash
 sudo systemctl status tcp-server # Check error details
 sudo journalctl -xe # View full system logs
-
-text
-
+```
 **Client can't connect:**
 Verify server is listening
+```bash
 sudo netstat -tlnp | grep 18890
+```
 
 Test connectivity
+```bash
 telnet <server-ip> 18890
+```
 
 Check firewall
+```bash
 sudo ufw status
 sudo ufw allow 18890/tcp
-
-text
+```
 
 **Logs not showing:**
 Verify service is running
+```bash
 systemctl is-active tcp-server
 systemctl is-active tcp-client@server01
+```
 
 Check journal size
+```bash
 journalctl --disk-usage
-
-text
+```
 
 ---
 
@@ -237,8 +262,6 @@ prisma-appaware-latency-tester/
 │ └── server01.env.example # Example environment file
 └── docs/
 └── DEMO.md # Demo presentation guide
-
-text
 
 ---
 

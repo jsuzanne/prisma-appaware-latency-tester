@@ -297,8 +297,7 @@ MIT License - See [LICENSE](LICENSE) file for details
 ## 🔗 Related Resources
 
 - [Prisma SD-WAN Documentation](https://docs.paloaltonetworks.com/prisma/prisma-sd-wan)
-- [App-Aware Routing](https://docs.paloaltonetworks.com/prisma/prisma-sd-wan/prisma-sd-wan-admin/prisma-sd-wan-application-policies)
-- [Layer 7 Visibility](https://docs.paloaltonetworks.com/prisma/prisma-sd-wan/prisma-sd-wan-admin/monitor-and-troubleshoot)
+- [Prisma SD-WAN Flow Browser](https://docs.paloaltonetworks.com/prisma-sd-wan/administration/prisma-sd-wan-sites-and-devices/set-up-sites/view-flows-tab)
 
 ---
 
